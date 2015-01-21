@@ -270,7 +270,9 @@ PHP_FUNCTION(wcx_encrypt)
 	efree(aes_origin_buf);
 	efree(aes_finnal_buf);
 
-	RETURN_STRINGL(result, 16 + aes_buf_size, 0);
+    RETVAL_STRINGL(result, 16 + aes_buf_size, 1);
+    efree(result);
+    return;
 }
 
 
