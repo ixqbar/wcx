@@ -155,9 +155,12 @@ PHP_RSHUTDOWN_FUNCTION(wcx)
  */
 PHP_MINFO_FUNCTION(wcx)
 {
-	php_info_print_table_start();
-	php_info_print_table_header(2, "wcx support", "enabled");
-	php_info_print_table_end();
+    php_info_print_table_start();
+    php_info_print_table_header(2, "wcx support", "enabled");
+    php_info_print_table_row(2, "author", "xingqiba");
+    php_info_print_table_row(2, "website", "http://xingqiba.sinaapp.com");
+    php_info_print_table_row(2, "contact", "ixqbar@gmail.com or qq174171262");
+    php_info_print_table_end();
 
 	/* Remove comments if you have entries in php.ini
 	DISPLAY_INI_ENTRIES();
