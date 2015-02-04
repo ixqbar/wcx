@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <stdlib.h>
+#include <time.h>
 #include "php.h"
 #include "php_ini.h"
 #include "ext/standard/php_rand.h"
@@ -54,14 +56,19 @@ ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_array_rand, 0, 0, 0)
 	ZEND_ARG_INFO(0, arr_num)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_random_trigger, 0, 0, 0)
+    ZEND_ARG_INFO(0, random_rate)
+ZEND_END_ARG_INFO()
+
 /* {{{ wcx_functions[]
  *
  * Every user visible function must have an entry in wcx_functions[].
  */
 const zend_function_entry wcx_functions[] = {
-	PHP_FE(wcx_encrypt,	   arg_info_wcx_encrypt)
-	PHP_FE(wcx_decrypt,	   arg_info_wcx_decrypt)
-	PHP_FE(wcx_array_rand, arg_info_wcx_array_rand)
+	PHP_FE(wcx_encrypt,	       arg_info_wcx_encrypt)
+	PHP_FE(wcx_decrypt,	       arg_info_wcx_decrypt)
+	PHP_FE(wcx_array_rand,     arg_info_wcx_array_rand)
+    PHP_FE(wcx_random_trigger, arg_info_wcx_random_trigger)
 	PHP_FE_END	/* Must be the last line in wcx_functions[] */
 };
 /* }}} */
@@ -138,6 +145,7 @@ PHP_MSHUTDOWN_FUNCTION(wcx)
  */
 PHP_RINIT_FUNCTION(wcx)
 {
+	srand(time(NULL));
 	return SUCCESS;
 }
 /* }}} */
@@ -157,7 +165,8 @@ PHP_MINFO_FUNCTION(wcx)
 {
     php_info_print_table_start();
     php_info_print_table_header(2, "wcx support", "enabled");
-    php_info_print_table_row(2, "author", "xingqiba");
+    php_info_print_table_row(2, "version", PHP_WCX_VERSION);
+    php_info_print_table_row(2, "author",  "xingqiba");
     php_info_print_table_row(2, "website", "http://xingqiba.sinaapp.com");
     php_info_print_table_row(2, "contact", "ixqbar@gmail.com or qq174171262");
     php_info_print_table_end();
@@ -179,7 +188,7 @@ PHP_FUNCTION(wcx_encrypt)
 	}
 
 	if (0 == encrypt_data_len
-			|| 0 == encrypt_key_len) {
+		|| 0 == encrypt_key_len) {
 		RETURN_NULL();
 	}
 
@@ -194,8 +203,6 @@ PHP_FUNCTION(wcx_encrypt)
 	//reset pointer to begin
 	encrypt_data -= encrypt_data_len;
 
-	//RETVAL_LONG(crc);
-
 	//check to gzcompress
 	int gzip = encrypt_data_len > 100 ? 1 : 0;
 
@@ -209,12 +216,9 @@ PHP_FUNCTION(wcx_encrypt)
 		if (SUCCESS != php_zlib_encode(encrypt_data, encrypt_data_len, &aes_data, &aes_data_len, encoding, level)) {
 			RETURN_NULL();
 		}
-		//php_printf("php-extension gzcompress len=%zd\n", gzip_len);
 	} else {
 		aes_data = estrndup(encrypt_data, encrypt_data_len);
 	}
-
-	//RETURN_STRINGL(aes_data, aes_data_len, 0);
 
 	//header
 	char header[33];
@@ -293,8 +297,8 @@ PHP_FUNCTION(wcx_decrypt)
 	}
 
 	if (decrypt_data_len < 48
-			|| decrypt_data_len % 16 != 0
-			|| 0 == decrypt_key_len) {
+		|| decrypt_data_len % 16 != 0
+		|| 0 == decrypt_key_len) {
 		return;
 	}
 
@@ -401,7 +405,8 @@ PHP_FUNCTION(wcx_array_rand)
 	HashPosition pos;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|l", &input, &num_req) == FAILURE) {
-		return;
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "First argument must be array and Second argument must be number");
+		RETURN_NULL();
 	}
 
 	num_avail = zend_hash_num_elements(Z_ARRVAL_P(input));
@@ -409,7 +414,7 @@ PHP_FUNCTION(wcx_array_rand)
 	if (ZEND_NUM_ARGS() > 1) {
 		if (num_req <= 0 || num_req > num_avail) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Second argument has to be between 1 and the number of elements in the array");
-			return;
+			RETURN_NULL();
 		}
 	}
 
@@ -458,6 +463,30 @@ PHP_FUNCTION(wcx_array_rand)
 		num_avail--;
 		zend_hash_move_forward_ex(Z_ARRVAL_P(input), &pos);
 	}
+}
+
+
+PHP_FUNCTION(wcx_random_trigger)
+{
+    int random_rate;
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &random_rate) == FAILURE) {
+    	php_error_docref(NULL TSRMLS_CC, E_WARNING, "argument must be number");
+    	RETURN_FALSE;
+    }
+
+    if (random_rate <= 0) {
+    	RETURN_FALSE;
+    }
+
+    if (random_rate >= 100) {
+    	RETURN_TRUE;
+    }
+
+    if (rand() % 101 <= 100 - random_rate) {
+    	RETVAL_FALSE;
+    } else {
+    	RETVAL_TRUE;
+    }
 }
 
 /*

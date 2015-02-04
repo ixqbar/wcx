@@ -24,7 +24,7 @@
 extern zend_module_entry wcx_module_entry;
 #define phpext_wcx_ptr &wcx_module_entry
 
-#define PHP_WCX_VERSION "0.1.0"
+#define PHP_WCX_VERSION "0.2.0"
 
 #ifdef PHP_WIN32
 #	define PHP_WCX_API __declspec(dllexport)
@@ -47,6 +47,7 @@ PHP_MINFO_FUNCTION(wcx);
 PHP_FUNCTION(wcx_encrypt);
 PHP_FUNCTION(wcx_decrypt);
 PHP_FUNCTION(wcx_array_rand);
+PHP_FUNCTION(wcx_random_trigger);
 
 /* 
   	Declare any global variables you may need between the BEGIN
