@@ -47,7 +47,7 @@ PHP_MINFO_FUNCTION(wcx);
 PHP_FUNCTION(wcx_encrypt);
 PHP_FUNCTION(wcx_decrypt);
 PHP_FUNCTION(wcx_array_rand);
-PHP_FUNCTION(wcx_random_trigger);
+PHP_FUNCTION(wcx_bet);
 
 /* 
   	Declare any global variables you may need between the BEGIN

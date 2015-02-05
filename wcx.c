@@ -56,7 +56,7 @@ ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_array_rand, 0, 0, 0)
 	ZEND_ARG_INFO(0, arr_num)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_random_trigger, 0, 0, 0)
+ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_bet, 0, 0, 0)
     ZEND_ARG_INFO(0, random_rate)
 ZEND_END_ARG_INFO()
 
@@ -65,10 +65,10 @@ ZEND_END_ARG_INFO()
  * Every user visible function must have an entry in wcx_functions[].
  */
 const zend_function_entry wcx_functions[] = {
-	PHP_FE(wcx_encrypt,	       arg_info_wcx_encrypt)
-	PHP_FE(wcx_decrypt,	       arg_info_wcx_decrypt)
-	PHP_FE(wcx_array_rand,     arg_info_wcx_array_rand)
-    PHP_FE(wcx_random_trigger, arg_info_wcx_random_trigger)
+	PHP_FE(wcx_encrypt,	   arg_info_wcx_encrypt)
+	PHP_FE(wcx_decrypt,	   arg_info_wcx_decrypt)
+	PHP_FE(wcx_array_rand, arg_info_wcx_array_rand)
+    PHP_FE(wcx_bet,        arg_info_wcx_bet)
 	PHP_FE_END	/* Must be the last line in wcx_functions[] */
 };
 /* }}} */
@@ -466,7 +466,7 @@ PHP_FUNCTION(wcx_array_rand)
 }
 
 
-PHP_FUNCTION(wcx_random_trigger)
+PHP_FUNCTION(wcx_bet)
 {
     int random_rate;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &random_rate) == FAILURE) {
