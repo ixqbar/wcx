@@ -41,22 +41,22 @@ ZEND_DECLARE_MODULE_GLOBALS(wcx)
 /* True global resources - no need for thread safety here */
 static int le_wcx;
 
-ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_encrypt, 0, 0, 0)
+ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_encrypt, 0, 0, 2)
 	ZEND_ARG_INFO(0, encrypt_str)
 	ZEND_ARG_INFO(0, encrypt_key)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_decrypt, 0, 0, 0)
+ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_decrypt, 0, 0, 2)
 	ZEND_ARG_INFO(0, decrypt_str)
 	ZEND_ARG_INFO(0, decrypt_key)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_array_rand, 0, 0, 0)
+ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_array_rand, 0, 0, 2)
 	ZEND_ARG_INFO(0, arr)
 	ZEND_ARG_INFO(0, arr_num)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_bet, 0, 0, 0)
+ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_bet, 0, 0, 1)
     ZEND_ARG_INFO(0, random_rate)
 ZEND_END_ARG_INFO()
 
