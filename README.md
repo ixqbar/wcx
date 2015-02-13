@@ -13,10 +13,10 @@ bool   wcx_bet(rate_num)
 
 task
 ```
-wcx_task_info()
-wcx_task_post($task, $expect_task_process_timestamp = 0, $task_uuid = '')
-wcx_task_delete($task_uuid)
-wcx_task_clear()
+array  wcx_task_info()
+string wcx_task_post($task, $expect_task_process_timestamp = 0, $task_uuid = '')
+bool   wcx_task_delete($task_uuid)
+bool   wcx_task_clear()
 ```
 
 task process
