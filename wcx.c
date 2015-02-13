@@ -31,6 +31,7 @@
 #include "ext/standard/crc32.h"
 #include "php_wcx.h"
 
+#include "wcx_task.c"
 #include "aes.c"
 #include "zlib.c"
 
@@ -125,6 +126,9 @@ PHP_MINIT_FUNCTION(wcx)
 	/* If you have INI entries, uncomment these lines 
 	REGISTER_INI_ENTRIES();
 	*/
+
+	register_wcx_task_class(TSRMLS_C);
+
 	return SUCCESS;
 }
 /* }}} */
