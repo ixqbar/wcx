@@ -9,7 +9,7 @@ array  wcx_array_rand(to_rand_array,num)
 bool   wcx_bet(rate_num)
 ```
 
-##dev plan
+##branch dev
 
 task
 ```
@@ -17,6 +17,8 @@ array  wcx_task_info()
 string wcx_task_post($task, $expect_task_process_timestamp = 0, $task_uuid = '')
 bool   wcx_task_delete($task_uuid)
 bool   wcx_task_clear()
+void   wcx_task_lock()
+void   wcx_task_unlock()
 ```
 
 task process
