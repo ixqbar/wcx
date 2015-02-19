@@ -20,6 +20,6 @@ void   wcx_task_unlock()
 $wcx_task_handle = new WcxTask();
 $wcx_task_handle->process(function($task){
     //task process
-});;
+});
 $wcx_task_handle->run();
 ```
