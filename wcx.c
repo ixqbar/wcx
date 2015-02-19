@@ -12,7 +12,7 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author:                                                              |
+  | Author: ixqbar@gmail.com                                             |
   +----------------------------------------------------------------------+
 */
 
@@ -29,15 +29,11 @@
 #include "ext/standard/php_rand.h"
 #include "ext/standard/info.h"
 #include "ext/standard/crc32.h"
-#include "php_wcx.h"
 
-#include "wcx_task.c"
+#include "php_wcx.h"
+#include "wcx_task.h"
 #include "aes.c"
 #include "zlib.c"
-
-/* If you declare any globals in php_wcx.h uncomment this:
-ZEND_DECLARE_MODULE_GLOBALS(wcx)
-*/
 
 /* True global resources - no need for thread safety here */
 static int le_wcx;
@@ -61,15 +57,29 @@ ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_bet, 0, 0, 1)
     ZEND_ARG_INFO(0, random_rate)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_task_delete, 0, 0, 1)
+    ZEND_ARG_INFO(0, task_delete_arg)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_task_post, 0, 0, 1)
+    ZEND_ARG_INFO(0, task_post_arg)
+ZEND_END_ARG_INFO()
+
 /* {{{ wcx_functions[]
  *
  * Every user visible function must have an entry in wcx_functions[].
  */
 const zend_function_entry wcx_functions[] = {
-	PHP_FE(wcx_encrypt,	   arg_info_wcx_encrypt)
-	PHP_FE(wcx_decrypt,	   arg_info_wcx_decrypt)
-	PHP_FE(wcx_array_rand, arg_info_wcx_array_rand)
-    PHP_FE(wcx_bet,        arg_info_wcx_bet)
+	PHP_FE(wcx_encrypt,	    arg_info_wcx_encrypt)
+	PHP_FE(wcx_decrypt,	    arg_info_wcx_decrypt)
+	PHP_FE(wcx_array_rand,  arg_info_wcx_array_rand)
+    PHP_FE(wcx_bet,         arg_info_wcx_bet)
+    PHP_FE(wcx_lock,        NULL)
+    PHP_FE(wcx_unlock,      NULL)
+    PHP_FE(wcx_task_info,   NULL)
+    PHP_FE(wcx_task_clear,  NULL)
+    PHP_FE(wcx_task_delete, arg_info_wcx_task_delete)
+    PHP_FE(wcx_task_post,   arg_info_wcx_task_post)
 	PHP_FE_END	/* Must be the last line in wcx_functions[] */
 };
 /* }}} */
@@ -100,33 +110,34 @@ ZEND_GET_MODULE(wcx)
 
 /* {{{ PHP_INI
  */
-/* Remove comments and fill if you need to have entries in php.ini
 PHP_INI_BEGIN()
-    STD_PHP_INI_ENTRY("wcx.global_value",      "42", PHP_INI_ALL, OnUpdateLong, global_value, zend_wcx_globals, wcx_globals)
-    STD_PHP_INI_ENTRY("wcx.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_wcx_globals, wcx_globals)
+    PHP_INI_ENTRY("wcx.debug",     			   "0",              PHP_INI_SYSTEM, NULL)
+    PHP_INI_ENTRY("wcx.task_queue_key",  	   "wcx_task_queue", PHP_INI_SYSTEM, NULL)
+    PHP_INI_ENTRY("wcx.task_data_key",         "wcx_task_data",  PHP_INI_SYSTEM, NULL)
+    PHP_INI_ENTRY("wcx.task_process_interval", "1", 			 PHP_INI_SYSTEM, NULL)
 PHP_INI_END()
-*/
 /* }}} */
 
-/* {{{ php_wcx_init_globals
- */
-/* Uncomment this function if you have INI entries
-static void php_wcx_init_globals(zend_wcx_globals *wcx_globals)
-{
-	wcx_globals->global_value = 0;
-	wcx_globals->global_string = NULL;
+static void php_wcx_init_globals(zend_wcx_globals *wcx_globals TSRMLS_DC) {
+	wcx_globals->wcx_task_running = 0;
+	wcx_globals->wcx_task_ptr     = (void *)wcx_task_init();
 }
-*/
-/* }}} */
+
+static void php_wcx_shutdown_globals() {
+	if (WCX_G(wcx_task_ptr)) {
+		wcx_task_release(((wcx_task_ptr *)WCX_G(wcx_task_ptr)));
+	}
+}
 
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(wcx)
 {
-	/* If you have INI entries, uncomment these lines 
+	//ini
 	REGISTER_INI_ENTRIES();
-	*/
-
+	//init
+	ZEND_INIT_MODULE_GLOBALS(wcx, php_wcx_init_globals, NULL);
+	//task
 	register_wcx_task_class(TSRMLS_C);
 
 	return SUCCESS;
@@ -137,9 +148,10 @@ PHP_MINIT_FUNCTION(wcx)
  */
 PHP_MSHUTDOWN_FUNCTION(wcx)
 {
-	/* uncomment this line if you have INI entries
+	php_wcx_shutdown_globals();
+	//ini
 	UNREGISTER_INI_ENTRIES();
-	*/
+
 	return SUCCESS;
 }
 /* }}} */
@@ -167,6 +179,7 @@ PHP_RSHUTDOWN_FUNCTION(wcx)
  */
 PHP_MINFO_FUNCTION(wcx)
 {
+	//info
     php_info_print_table_start();
     php_info_print_table_header(2, "wcx support", "enabled");
     php_info_print_table_row(2, "version", PHP_WCX_VERSION);
@@ -175,9 +188,8 @@ PHP_MINFO_FUNCTION(wcx)
     php_info_print_table_row(2, "contact", "ixqbar@gmail.com or qq174171262");
     php_info_print_table_end();
 
-	/* Remove comments if you have entries in php.ini
-	DISPLAY_INI_ENTRIES();
-	*/
+    //
+    DISPLAY_INI_ENTRIES();
 }
 /* }}} */
 
