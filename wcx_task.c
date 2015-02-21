@@ -153,7 +153,6 @@ PHP_METHOD(wcx_task, run) {
 	int result = 0;
 	wcx_task_message *queue_message = (wcx_task_message *)emalloc(sizeof(wcx_task_message) + WCX_TASK_MESSAGE_MAX_LEN);
 	wcx_task_node_value *task_node_value, *task_head_node_value, *task_tail_node_value, *task_match_node_value;
-	listIter *task_list_iter = NULL;
 	listNode *task_list_node = NULL;
 
 	WCX_G(wcx_task_running) = 1;
@@ -200,14 +199,15 @@ PHP_METHOD(wcx_task, run) {
 							} else if (task_node_value->ntime >= task_tail_node_value->ntime) {
 								listAddNodeTail(tpr->task, (void *)task_node_value);
 							} else {
-								task_list_iter = listGetIterator(tpr->task, LIST_START_HEAD);
-								while((task_list_node = listNext(task_list_iter)) != NULL) {
+								task_list_node = tpr->task->head;
+								while (NULL != task_list_node) {
 									task_match_node_value = (wcx_task_node_value *)task_list_node->value;
 									if (task_match_node_value->ntime > task_node_value->ntime) {
 										listInsertNode(tpr->task, task_list_node, (void *)task_node_value, 0);
+										break;
 									}
+									task_list_node = task_list_node->next;
 								}
-								free(task_list_iter);
 							}
 						} else {
 							listAddNodeHead(tpr->task, (void *)task_node_value);
@@ -215,15 +215,15 @@ PHP_METHOD(wcx_task, run) {
 					}
 					break;
 				case WCX_TASK_MESSAGE_OPT_IS_DELETE:
-					task_list_iter = listGetIterator(tpr->task, LIST_START_HEAD);
-					while((task_list_node = listNext(task_list_iter)) != NULL) {
+					task_list_node = tpr->task->head;
+					while (NULL != task_list_node) {
 						task_node_value = (wcx_task_node_value *)task_list_node->value;
 						if (0 == strcmp(task_node_value->nuuid, queue_message->muuid)) {
 							WCX_TASK_DEBUG_LOG("process crontab to delete uuid=%s,stext=%s\n", task_node_value->nuuid, task_node_value->ntext);
 							listDelNode(tpr->task, task_list_node);
 						}
+						task_list_node = task_list_node->next;
 					}
-					free(task_list_iter);
 					break;
 			}
 
@@ -237,8 +237,8 @@ PHP_METHOD(wcx_task, run) {
 
 		WCX_TASK_DEBUG_LOG("check crontab\n");
 		//loop
-		task_list_iter = listGetIterator(tpr->task, LIST_START_HEAD);
-		while((task_list_node = listNext(task_list_iter)) != NULL) {
+		task_list_node = tpr->task->head;
+		while (NULL != task_list_node) {
 			task_node_value = (wcx_task_node_value *)task_list_node->value;
 			if (task_node_value->ntime < timestamp) {
 				WCX_TASK_DEBUG_LOG("process crontab to execute uuid=%s,stext=%s\n", task_node_value->nuuid, task_node_value->ntext);
@@ -247,8 +247,8 @@ PHP_METHOD(wcx_task, run) {
 			} else {
 				break;
 			}
+			task_list_node = task_list_node->next;
 		}
-		free(task_list_iter);
 		WCX_TASK_DEBUG_LOG("check crontab end\n");
 
 		WCX_TASK_UNLOCK();
