@@ -29,23 +29,27 @@
 #include "wcx_task.h"
 #include "php_wcx.h"
 
-inline void wcx_task_execute(const char *unserialize_str, zval *closure) {
+inline void wcx_task_execute(char *unserialize_str, zval *closure) {
 	php_unserialize_data_t var_hash;
 	zval *tmp = NULL;
 	MAKE_STD_ZVAL(tmp);
 	PHP_VAR_UNSERIALIZE_INIT(var_hash);
-	if (php_var_unserialize(&tmp, &unserialize_str, unserialize_str + strlen(unserialize_str), &var_hash TSRMLS_CC)) {
+	if (php_var_unserialize(&tmp,
+			(const unsigned char **)&unserialize_str,
+			(const unsigned char *)(unserialize_str + strlen(unserialize_str)),
+			&var_hash TSRMLS_CC)) {
 		zval **params[1];
 		params[0] = &tmp;
-		zval *retval;
-		if (call_user_function_ex(CG(function_table), NULL, closure, &retval, 1, params, 0, NULL TSRMLS_CC) == SUCCESS ) {
-			if (retval) {
+		zval *retval = NULL;
+		if (SUCCESS == call_user_function_ex(CG(function_table), NULL, closure, &retval, 1, params, 0, NULL TSRMLS_CC)) {
+			if (NULL != retval) {
 				zval_ptr_dtor(&retval);
 			}
 		}
 	} else {
 		WCX_TASK_DEBUG_LOG("unserialize failed %s\n", strerror(errno));
 	}
+	zval_dtor(tmp);
 	FREE_ZVAL(tmp);
 	PHP_VAR_UNSERIALIZE_DESTROY(var_hash);
 }
@@ -182,7 +186,7 @@ PHP_METHOD(wcx_task, run) {
 				case WCX_TASK_MESSAGE_OPT_IS_ADD:
 					if (queue_message->mtime <= timestamp) {
 						WCX_TASK_DEBUG_LOG("process message to execute\n");
-						wcx_task_execute((const unsigned char *) queue_message->mtext, closure);
+						wcx_task_execute(queue_message->mtext, closure);
 					} else {
 						WCX_TASK_DEBUG_LOG("process message to crontab\n");
 						//init node value
@@ -242,7 +246,7 @@ PHP_METHOD(wcx_task, run) {
 			task_node_value = (wcx_task_node_value *)task_list_node->value;
 			if (task_node_value->ntime < timestamp) {
 				WCX_TASK_DEBUG_LOG("process crontab to execute uuid=%s,stext=%s\n", task_node_value->nuuid, task_node_value->ntext);
-				wcx_task_execute((const unsigned char *) task_node_value->ntext, closure);
+				wcx_task_execute(task_node_value->ntext, closure);
 				listDelNode(tpr->task, task_list_node);
 			} else {
 				break;
@@ -373,6 +377,7 @@ PHP_FUNCTION(wcx_task_info) {
 
 	add_assoc_long(return_value, "process_queue_num", tpr->info->qnum);
 	add_assoc_long(return_value, "task_crontab_num", tpr->task->len);
+	add_assoc_long(return_value, "task_process_num", tpr->info->running);
 }
 
 PHP_FUNCTION(wcx_task_delete) {
