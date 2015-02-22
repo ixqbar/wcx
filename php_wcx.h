@@ -24,7 +24,7 @@
 extern zend_module_entry wcx_module_entry;
 #define phpext_wcx_ptr &wcx_module_entry
 
-#define PHP_WCX_VERSION "0.2.0"
+#define PHP_WCX_VERSION "0.2.1"
 
 #ifdef PHP_WIN32
 #	define PHP_WCX_API __declspec(dllexport)
