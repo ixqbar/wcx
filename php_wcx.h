@@ -44,6 +44,7 @@ PHP_RINIT_FUNCTION(wcx);
 PHP_RSHUTDOWN_FUNCTION(wcx);
 PHP_MINFO_FUNCTION(wcx);
 
+PHP_FUNCTION(wcx_version);
 PHP_FUNCTION(wcx_encrypt);
 PHP_FUNCTION(wcx_decrypt);
 PHP_FUNCTION(wcx_array_rand);

@@ -18,6 +18,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/shm.h>
+#include <signal.h>
 
 #include "php.h"
 #include "php_ini.h"
@@ -29,7 +30,14 @@
 #include "wcx_task.h"
 #include "php_wcx.h"
 
-inline void wcx_task_execute(char *unserialize_str, zval *closure) {
+int task_process_running = 1;
+
+void task_process_halt(int signal) {
+	WCX_TASK_DEBUG_LOG("catch signal %d\n", signal);
+	task_process_running = 0;
+}
+
+void wcx_task_execute(char *unserialize_str, zval *closure) {
 	php_unserialize_data_t var_hash;
 	zval *tmp = NULL;
 	MAKE_STD_ZVAL(tmp);
@@ -153,6 +161,12 @@ PHP_METHOD(wcx_task, run) {
 	}
 	efree(func_name);
 
+	struct sigaction act;
+	act.sa_handler = task_process_halt;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_RESETHAND;
+	sigaction(SIGINT, &act, 0);
+
 	long timestamp;
 	int result = 0;
 	wcx_task_message *queue_message = (wcx_task_message *)emalloc(sizeof(wcx_task_message) + WCX_TASK_MESSAGE_MAX_LEN);
@@ -162,7 +176,8 @@ PHP_METHOD(wcx_task, run) {
 	WCX_G(wcx_task_running) = 1;
 	tpr->info->running += 1;
 
-	while (tpr->info->running > 0) {
+	while (tpr->info->running > 0
+			&& task_process_running > 0) {
 		WCX_TASK_LOCK();
 
 		timestamp = (long)time(NULL);

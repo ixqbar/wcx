@@ -70,6 +70,7 @@ ZEND_END_ARG_INFO()
  * Every user visible function must have an entry in wcx_functions[].
  */
 const zend_function_entry wcx_functions[] = {
+	PHP_FE(wcx_version,	    NULL)
 	PHP_FE(wcx_encrypt,	    arg_info_wcx_encrypt)
 	PHP_FE(wcx_decrypt,	    arg_info_wcx_decrypt)
 	PHP_FE(wcx_array_rand,  arg_info_wcx_array_rand)
@@ -194,8 +195,11 @@ PHP_MINFO_FUNCTION(wcx)
 /* }}} */
 
 
-PHP_FUNCTION(wcx_encrypt)
-{
+PHP_FUNCTION(wcx_version) {
+	RETURN_STRING(PHP_WCX_VERSION, 1);
+}
+
+PHP_FUNCTION(wcx_encrypt) {
 	char *encrypt_data = NULL, *encrypt_key=NULL;
 	int encrypt_data_len, encrypt_key_len;
 
@@ -299,8 +303,7 @@ PHP_FUNCTION(wcx_encrypt)
 }
 
 
-PHP_FUNCTION(wcx_decrypt)
-{
+PHP_FUNCTION(wcx_decrypt) {
 	char *decrypt_data = NULL, *decrypt_key=NULL;
 	int decrypt_data_len, decrypt_key_len;
 
@@ -410,8 +413,7 @@ PHP_FUNCTION(wcx_decrypt)
 }
 
 
-PHP_FUNCTION(wcx_array_rand)
-{
+PHP_FUNCTION(wcx_array_rand) {
 	zval *input;
 	long randval, num_req = 1;
 	int num_avail, key_type, rand_num;
@@ -482,8 +484,7 @@ PHP_FUNCTION(wcx_array_rand)
 }
 
 
-PHP_FUNCTION(wcx_bet)
-{
+PHP_FUNCTION(wcx_bet) {
     int random_rate;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &random_rate) == FAILURE) {
     	php_error_docref(NULL TSRMLS_CC, E_WARNING, "argument must be number");
