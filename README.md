@@ -23,24 +23,3 @@ $wcx_task_handle->process(function($task){
 });
 $wcx_task_handle->run();
 ```
-
-##branch dev
-
-task
-```
-array  wcx_task_info()
-string wcx_task_post($task, $expect_task_process_timestamp = 0, $task_uuid = '')
-bool   wcx_task_delete($task_uuid)
-bool   wcx_task_clear()
-void   wcx_lock()
-void   wcx_unlock()
-```
-
-task process
-```
-$wcx_task_handle = new WcxTask();
-$wcx_task_handle->process(function($task){
-    //task process
-});
-$wcx_task_handle->run();
-```
