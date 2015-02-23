@@ -141,7 +141,6 @@ PHP_METHOD(wcx_task, process) {
 
 PHP_METHOD(wcx_task, run) {
 	wcx_task_ptr *tpr = WCX_TASK_PTR();
-
 	if (tpr == NULL || tpr->mid < 0) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "task init failed");
 		RETURN_FALSE;
@@ -486,8 +485,9 @@ wcx_task_ptr *wcx_task_init() {
 	}
 
 	tpr->info = (wcx_task_info *)shared_memory;
-	if (tpr->info->running <= 0) {
+	if (tpr->info->init <= 0) {
 		WCX_TASK_DEBUG_LOG("shared memory data init\n");
+		tpr->info->init = 1;
 		sem_init(&tpr->info->slock, 1, 1);
 		sem_init(&tpr->info->ulock, 1, 1);
 	} else {
@@ -510,7 +510,7 @@ void wcx_task_release(wcx_task_ptr *tpr) {
 		if (WCX_G(wcx_task_running)) {
 			WCX_TASK_LOCK();
 			tpr->info->running -= 1;
-			if (tpr->info->running < 0) {
+			if (tpr->info->running <= 0) {
 				tpr->info->running = 0;
 				tpr->info->qnum    = 0;
 			}

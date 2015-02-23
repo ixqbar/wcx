@@ -61,6 +61,7 @@ typedef struct _wcx_task_message {
 } wcx_task_message;
 
 typedef struct _wcx_task_info {
+	int init;
 	int running;
 	long qnum;
 	sem_t slock;
