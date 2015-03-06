@@ -445,6 +445,10 @@ PHP_FUNCTION(wcx_task_clear) {
 }
 
 wcx_task_ptr *wcx_task_init() {
+	if (0 == INI_INT("wcx.task_enabled")) {
+		return NULL;
+	}
+
 	wcx_task_ptr *tpr = malloc(sizeof (wcx_task_ptr));
 	if (tpr == NULL) {
 		return NULL;
