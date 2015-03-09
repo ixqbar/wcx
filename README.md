@@ -1,6 +1,15 @@
 
 more detail http://xingqiba.sinaapp.com
 
+##php.ini
+```
+wcx.debug = 0
+wcx.task_enabled = 0
+wcx.task_queue_key = wcx_task_queue
+wcx.task_data_key = wcx_task_data
+wcx.task_process_interval = 1
+```
+
 ##functions
 ```
 string wcx_encrypt(to_encrypt_string, to_encrypt_key)
