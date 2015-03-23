@@ -43,7 +43,7 @@ bool   wcx_task_clear()
 ###class
 ```
 $wcx_task_handle = new WcxTask();
-$wcx_task_handle->process(function($task){
+$wcx_task_handle->process(function($task_uuid, $task_data){
     //task process
     //使用wcx_task_post可投递$task到任务队列中，系统每间隔wcx.task_process_interval秒扫描一次并检查队列中task的执行时间点($expect_task_process_timestamp,默认是立刻被执行)是否小于当前时间，小于则触发process，否则等待下一轮检测
 });
