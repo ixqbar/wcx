@@ -37,28 +37,41 @@ void task_process_halt(int signal) {
 	task_process_running = 0;
 }
 
-void wcx_task_execute(char *unserialize_str, zval *closure) {
-	php_unserialize_data_t var_hash;
+void wcx_task_execute(wcx_task_message *wtm, zval *closure) {
 	zval *tmp = NULL;
+	zval *muuid = NULL;
+
 	MAKE_STD_ZVAL(tmp);
+	MAKE_STD_ZVAL(muuid);
+	ZVAL_STRINGL(muuid, wtm->mtext + wtm->mtask_len, wtm->muuid_len, 1);
+
+	const unsigned char *p = (const unsigned char *) wtm->mtext;
+
+	php_unserialize_data_t var_hash;
 	PHP_VAR_UNSERIALIZE_INIT(var_hash);
 	if (php_var_unserialize(&tmp,
-			(const unsigned char **)&unserialize_str,
-			(const unsigned char *)(unserialize_str + strlen(unserialize_str)),
+			&p,
+			p + wtm->mtask_len,
 			&var_hash TSRMLS_CC)) {
-		zval **params[1];
-		params[0] = &tmp;
+		zval **params[2];
+		params[0] = &muuid;
+		params[1] = &tmp;
 		zval *retval = NULL;
-		if (SUCCESS == call_user_function_ex(CG(function_table), NULL, closure, &retval, 1, params, 0, NULL TSRMLS_CC)) {
+		if (SUCCESS == call_user_function_ex(CG(function_table), NULL, closure, &retval, 2, params, 0, NULL TSRMLS_CC)) {
 			if (NULL != retval) {
 				zval_ptr_dtor(&retval);
 			}
 		}
 	} else {
-		WCX_TASK_DEBUG_LOG("unserialize failed %s\n", strerror(errno));
+		WCX_TASK_DEBUG_LOG("unserialize failed\n");
 	}
+
 	zval_dtor(tmp);
 	FREE_ZVAL(tmp);
+
+	zval_dtor(muuid);
+	FREE_ZVAL(muuid);
+
 	PHP_VAR_UNSERIALIZE_DESTROY(var_hash);
 }
 
@@ -169,7 +182,7 @@ PHP_METHOD(wcx_task, run) {
 	long timestamp;
 	int result = 0;
 	wcx_task_message *queue_message = (wcx_task_message *)emalloc(sizeof(wcx_task_message) + WCX_TASK_MESSAGE_MAX_LEN);
-	wcx_task_node_value *task_node_value, *task_head_node_value, *task_tail_node_value, *task_match_node_value;
+	wcx_task_message *task_node_value, *task_head_node_value, *task_tail_node_value, *task_match_node_value;
 	listNode *task_list_node = NULL;
 
 	WCX_G(wcx_task_running) = 1;
@@ -177,7 +190,9 @@ PHP_METHOD(wcx_task, run) {
 
 	while (tpr->info->running > 0
 			&& task_process_running > 0) {
+		WCX_TASK_DEBUG_LOG("task queue to lock\n");
 		WCX_TASK_LOCK();
+		WCX_TASK_DEBUG_LOG("task queue to locked\n");
 
 		timestamp = (long)time(NULL);
 #ifdef MSG_EXCEPT
@@ -187,40 +202,43 @@ PHP_METHOD(wcx_task, run) {
 #endif
 		WCX_TASK_DEBUG_LOG("got queue len=%d\n", result);
 		if (result > 0) {
-			WCX_TASK_DEBUG_LOG("got message toal_len=%d, opt=%d, time %ld, buffer=%s, buffer_len=%d, uuid=%s, uuid_len=%d\n",
+			WCX_TASK_DEBUG_LOG("got message toal_len=%d, action=%ld, time=%ld, uuid_len=%d, task_len=%d, buffer=%s\n",
 					result,
 					queue_message->mopt,
 					queue_message->mtime,
-					queue_message->mtext,
-					strlen(queue_message->mtext),
-					queue_message->muuid,
-					strlen(queue_message->muuid));
+					queue_message->muuid_len,
+					queue_message->mtask_len,
+					queue_message->mtext);
 
 			switch (queue_message->mopt) {
 				case WCX_TASK_MESSAGE_OPT_IS_ADD:
 					if (queue_message->mtime <= timestamp) {
 						WCX_TASK_DEBUG_LOG("process message to execute\n");
-						wcx_task_execute(queue_message->mtext, closure);
+						wcx_task_execute(queue_message, closure);
 					} else {
 						WCX_TASK_DEBUG_LOG("process message to crontab\n");
 						//init node value
-						task_node_value = malloc(sizeof (wcx_task_node_value));
-						task_node_value->ntime = queue_message->mtime;
-						memcpy(task_node_value->nuuid, queue_message->muuid, strlen(queue_message->muuid) + 1);
-						memcpy(task_node_value->ntext, queue_message->mtext, strlen(queue_message->mtext) + 1);
+						task_node_value = malloc(sizeof(wcx_task_message) + queue_message->muuid_len + queue_message->mtask_len + 1);
+						task_node_value->mtype     = 0;
+						task_node_value->mopt      = 0;
+						task_node_value->mtime     = queue_message->mtime;
+						task_node_value->muuid_len = queue_message->muuid_len;
+						task_node_value->mtask_len = queue_message->mtask_len;
+						memcpy(task_node_value->mtext, queue_message->mtext, queue_message->muuid_len + queue_message->mtask_len);
+						task_node_value->mtext[queue_message->muuid_len + queue_message->mtask_len] = '\0';
 
 						if (tpr->task->head) {
-							task_head_node_value = (wcx_task_node_value *)tpr->task->head->value;
-							task_tail_node_value = (wcx_task_node_value *)tpr->task->tail->value;
-							if (task_node_value->ntime < task_head_node_value->ntime) {
+							task_head_node_value = (wcx_task_message *)tpr->task->head->value;
+							task_tail_node_value = (wcx_task_message *)tpr->task->tail->value;
+							if (task_node_value->mtime < task_head_node_value->mtime) {
 								listAddNodeHead(tpr->task, (void *)task_node_value);
-							} else if (task_node_value->ntime >= task_tail_node_value->ntime) {
+							} else if (task_node_value->mtime >= task_tail_node_value->mtime) {
 								listAddNodeTail(tpr->task, (void *)task_node_value);
 							} else {
 								task_list_node = tpr->task->head;
 								while (NULL != task_list_node) {
-									task_match_node_value = (wcx_task_node_value *)task_list_node->value;
-									if (task_match_node_value->ntime > task_node_value->ntime) {
+									task_match_node_value = (wcx_task_message *)task_list_node->value;
+									if (task_match_node_value->mtime > task_node_value->mtime) {
 										listInsertNode(tpr->task, task_list_node, (void *)task_node_value, 0);
 										break;
 									}
@@ -235,9 +253,9 @@ PHP_METHOD(wcx_task, run) {
 				case WCX_TASK_MESSAGE_OPT_IS_DELETE:
 					task_list_node = tpr->task->head;
 					while (NULL != task_list_node) {
-						task_node_value = (wcx_task_node_value *)task_list_node->value;
-						if (0 == strcmp(task_node_value->nuuid, queue_message->muuid)) {
-							WCX_TASK_DEBUG_LOG("process crontab to delete uuid=%s,stext=%s\n", task_node_value->nuuid, task_node_value->ntext);
+						task_node_value = (wcx_task_message *)task_list_node->value;
+						if (0 == strncmp(task_node_value->mtext + task_node_value->mtask_len, queue_message->mtext, queue_message->muuid_len)) {
+							WCX_TASK_DEBUG_LOG("process crontab to delete task=%s\n", queue_message->mtext);
 							listDelNode(tpr->task, task_list_node);
 						}
 						task_list_node = task_list_node->next;
@@ -245,22 +263,26 @@ PHP_METHOD(wcx_task, run) {
 					break;
 			}
 
-			memset(queue_message->mtext, 0, strlen(queue_message->mtext));
-			memset(queue_message->muuid, WCX_TASK_MESSAGE_UUID_PADDING, WCX_TASK_MESSAGE_UUID_LEN);
 			queue_message->mtime = 0;
+			memset(queue_message->mtext, 0,  queue_message->muuid_len + queue_message->mtask_len);
+			queue_message->muuid_len = 0;
+			queue_message->mtask_len = 0;
 
 			tpr->info->qnum += 1;
-			WCX_TASK_DEBUG_LOG("shared process num=%d\n", tpr->info->qnum);
+			WCX_TASK_DEBUG_LOG("shared process num=%ld\n", tpr->info->qnum);
 		}
 
 		WCX_TASK_DEBUG_LOG("check crontab\n");
 		//loop
 		task_list_node = tpr->task->head;
 		while (NULL != task_list_node) {
-			task_node_value = (wcx_task_node_value *)task_list_node->value;
-			if (task_node_value->ntime < timestamp) {
-				WCX_TASK_DEBUG_LOG("process crontab to execute uuid=%s,stext=%s\n", task_node_value->nuuid, task_node_value->ntext);
-				wcx_task_execute(task_node_value->ntext, closure);
+			task_node_value = (wcx_task_message *)task_list_node->value;
+			if (task_node_value->mtime < timestamp) {
+				WCX_TASK_DEBUG_LOG("process crontab to execute uuid_len=%d, task_len=%d, buffer=%s\n",
+						task_node_value->muuid_len,
+						task_node_value->mtask_len,
+						task_node_value->mtext);
+				wcx_task_execute(task_node_value, closure);
 				listDelNode(tpr->task, task_list_node);
 			} else {
 				break;
@@ -269,7 +291,9 @@ PHP_METHOD(wcx_task, run) {
 		}
 		WCX_TASK_DEBUG_LOG("check crontab end\n");
 
+		WCX_TASK_DEBUG_LOG("task queue to unlock\n");
 		WCX_TASK_UNLOCK();
+		WCX_TASK_DEBUG_LOG("task queue to unlocked\n");
 		sleep(INI_INT("wcx.task_process_interval"));
 	}
 
@@ -302,25 +326,11 @@ PHP_FUNCTION(wcx_task_post) {
 		RETURN_FALSE;
 	}
 
-	//@see sysvmsg.c
-	smart_str msg_var = {0};
-	php_serialize_data_t var_hash;
-
-	PHP_VAR_SERIALIZE_INIT(var_hash);
-	php_var_serialize(&msg_var, &message, &var_hash TSRMLS_CC);
-	PHP_VAR_SERIALIZE_DESTROY(var_hash);
-
-	//check size
-	if (msg_var.len > WCX_TASK_MESSAGE_MAX_LEN) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "overflow max byte size %d", WCX_TASK_MESSAGE_MAX_LEN);
-		RETURN_FALSE;
-	}
-
 	if (user_args_len < 2) {
 		message_time = (long)time(NULL);
 	}
 
-	if (user_args_len < 3) {
+	if (user_args_len < 3 || user_message_uuid_len == 0) {
 		int sec, usec;
 		struct timeval tv;
 
@@ -331,9 +341,23 @@ PHP_FUNCTION(wcx_task_post) {
 		user_message_uuid_len = spprintf(&user_message_uuid, 0, "%08x%05x", sec, usec);
 	}
 
+	//@see sysvmsg.c
+	smart_str msg_var = {0};
+	php_serialize_data_t var_hash;
+
+	PHP_VAR_SERIALIZE_INIT(var_hash);
+	php_var_serialize(&msg_var, &message, &var_hash TSRMLS_CC);
+	PHP_VAR_SERIALIZE_DESTROY(var_hash);
+
+	//check size
+	if (msg_var.len > WCX_TASK_MESSAGE_MAX_LEN - user_message_uuid_len) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "overflow max byte size %d", WCX_TASK_MESSAGE_MAX_LEN);
+		RETURN_FALSE;
+	}
+
 	RETVAL_STRINGL(user_message_uuid, user_message_uuid_len,  1);
 
-	int message_len = sizeof (wcx_task_message) + msg_var.len;
+	int message_len = sizeof (wcx_task_message) + user_message_uuid_len + msg_var.len + 1;
 	wcx_task_message *queue_message = emalloc(message_len);
 
 	//message type must be > 0
@@ -342,13 +366,21 @@ PHP_FUNCTION(wcx_task_post) {
 	queue_message->mopt  = WCX_TASK_MESSAGE_OPT_IS_ADD;
 	//message time
 	queue_message->mtime = message_time;
-	//message uuid
-	memset(queue_message->muuid, WCX_TASK_MESSAGE_UUID_PADDING, WCX_TASK_MESSAGE_UUID_LEN);
-	memcpy(queue_message->muuid, user_message_uuid,             WCX_TASK_MESSAGE_UUID_LEN + 1);
+	//message uuid len
+	queue_message->muuid_len = user_message_uuid_len;
+	//message data len
+	queue_message->mtask_len = msg_var.len;
 	//message
-	memcpy(queue_message->mtext, msg_var.c, msg_var.len + 1);
+	memcpy(queue_message->mtext, msg_var.c, msg_var.len);
+	memcpy(queue_message->mtext + msg_var.len, user_message_uuid, user_message_uuid_len);
+	queue_message->mtext[user_message_uuid_len + msg_var.len] = '\0';
 
-	WCX_TASK_DEBUG_LOG("task post total_len=%d, data=%s, data_len=%d, uuid=%s\n", message_len, msg_var.c, msg_var.len, user_message_uuid);
+	WCX_TASK_DEBUG_LOG("task post total_len=%d, uuid_len=%d, uuid=%s, task_len=%d, buffer=%s\n",
+			message_len,
+			user_message_uuid_len,
+			user_message_uuid,
+			(int)msg_var.len,
+			msg_var.c);
 
 	smart_str_free(&msg_var);
 
@@ -407,21 +439,33 @@ PHP_FUNCTION(wcx_task_delete) {
 		RETURN_FALSE;
 	}
 
-	if (user_message_uuid_len != WCX_TASK_MESSAGE_UUID_LEN) {
+	if (user_message_uuid_len <= 0) {
 		RETURN_FALSE;
 	}
 
-	wcx_task_message *queue_message = emalloc(sizeof (wcx_task_message));
+	int message_len = sizeof (wcx_task_message) + user_message_uuid_len + 1;
+	wcx_task_message *queue_message = emalloc(message_len);
 	//message type must be > 0
 	queue_message->mtype = 1;
 	//message opt
 	queue_message->mopt  = WCX_TASK_MESSAGE_OPT_IS_DELETE;
 	//message time
-	queue_message->mtime = 0;
-	//message uuid
-	memcpy(queue_message->muuid, user_message_uuid, WCX_TASK_MESSAGE_UUID_LEN + 1);
+	queue_message->mtime = (long)time(NULL);
+	//message uuid len
+	queue_message->muuid_len = user_message_uuid_len;
+	//message task len
+	queue_message->mtask_len = 0;
+	//message data
+	memcpy(queue_message->mtext, user_message_uuid, user_message_uuid_len);
+	queue_message->mtext[user_message_uuid_len] = '\0';
 
-	int result = msgsnd(tpr->mid, queue_message, sizeof (wcx_task_message) - sizeof (long), 0);
+	WCX_TASK_DEBUG_LOG("task delete total_len=%d, uuid_len=%d, uuid=%s, buffer=%s\n",
+				message_len,
+				user_message_uuid_len,
+				user_message_uuid,
+				queue_message->mtext);
+
+	int result = msgsnd(tpr->mid, queue_message, message_len - sizeof (long), 0);
 	efree(queue_message);
 	if (result == -1) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "task delete failed: %s", strerror(errno));

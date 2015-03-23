@@ -11,9 +11,7 @@
 #include "wcx_list.h"
 #include <semaphore.h>
 
-#define WCX_TASK_MESSAGE_UUID_PADDING  ' '
-#define WCX_TASK_MESSAGE_UUID_LEN      13
-#define WCX_TASK_MESSAGE_MAX_LEN       1024
+#define WCX_TASK_MESSAGE_MAX_LEN       2048
 #define WCX_TASK_MESSAGE_OPT_IS_ADD    1
 #define WCX_TASK_MESSAGE_OPT_IS_DELETE 2
 
@@ -56,8 +54,9 @@ typedef struct _wcx_task_message {
 	long mtype;
 	long mtime;
 	long mopt;
-	char muuid[WCX_TASK_MESSAGE_UUID_LEN + 1];
-	char mtext[1];
+	int muuid_len;
+	int mtask_len;
+	char mtext[];
 } wcx_task_message;
 
 typedef struct _wcx_task_info {
@@ -67,12 +66,6 @@ typedef struct _wcx_task_info {
 	sem_t slock;
 	sem_t ulock;
 } wcx_task_info;
-
-typedef struct _wcx_task_node_value {
-	long ntime;
-	char nuuid[WCX_TASK_MESSAGE_UUID_LEN + 1];
-	char ntext[WCX_TASK_MESSAGE_MAX_LEN + 1];
-} wcx_task_node_value;
 
 typedef struct _wcx_task_ptr {
 	int mid;
