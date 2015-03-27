@@ -12,7 +12,7 @@ var_dump($result);
 $to_delete_uuid = '';
 $i = 1;
 while ($i < 10) {
-	$result = wcx_task_post("abd" . $i, time() + 10);
+	$result = wcx_task_post("abd" . $i, time() + 30);
 	var_dump($result);
 	var_dump(wcx_task_info());
 	if ($i == 3) {
@@ -21,4 +21,5 @@ while ($i < 10) {
 	$i++;
 }
 
+echo "delete task:" . $to_delete_uuid . "\n";
 var_dump(wcx_task_delete($to_delete_uuid));

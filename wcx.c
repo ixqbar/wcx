@@ -115,11 +115,10 @@ ZEND_GET_MODULE(wcx)
 /* {{{ PHP_INI
  */
 PHP_INI_BEGIN()
-    PHP_INI_ENTRY("wcx.debug",     			   "0",              PHP_INI_USER,   NULL)
-    PHP_INI_ENTRY("wcx.task_enabled",  	   	   "0", 			 PHP_INI_USER,   NULL)
-    PHP_INI_ENTRY("wcx.task_queue_key",  	   "wcx_task_queue", PHP_INI_SYSTEM, NULL)
-    PHP_INI_ENTRY("wcx.task_data_key",         "wcx_task_data",  PHP_INI_SYSTEM, NULL)
-    PHP_INI_ENTRY("wcx.task_process_interval", "1", 			 PHP_INI_USER,   NULL)
+    PHP_INI_ENTRY("wcx.debug",     	    "0",              PHP_INI_USER,   NULL)
+    PHP_INI_ENTRY("wcx.task_enabled",  	"0", 			  PHP_INI_USER,   NULL)
+    PHP_INI_ENTRY("wcx.task_queue_key", "wcx_task_queue", PHP_INI_SYSTEM, NULL)
+    PHP_INI_ENTRY("wcx.task_data_key",  "wcx_task_data",  PHP_INI_SYSTEM, NULL)
 PHP_INI_END()
 /* }}} */
 

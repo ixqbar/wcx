@@ -127,8 +127,8 @@ void register_wcx_task_class(TSRMLS_D) {
 	wcx_task_object_handlers.clone_obj = NULL;
 	wcx_task_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
 
-	zend_declare_property_null(wcx_task_class_entry, "process", sizeof("process") - 1, ZEND_ACC_PUBLIC TSRMLS_CC);
-	zend_declare_property_long(wcx_task_class_entry, "debug", sizeof("debug") - 1, 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_null(wcx_task_class_entry, ZEND_STRL(WCX_TASK_PROPERT_PROCESS_NAME), ZEND_ACC_PROTECTED TSRMLS_CC);
+	zend_declare_property_long(wcx_task_class_entry, ZEND_STRL(WCX_TASK_PROPERT_INTERVAL_NAME), 1, ZEND_ACC_PROTECTED TSRMLS_CC);
 }
 
 PHP_METHOD(wcx_task, __construct) {
@@ -141,13 +141,28 @@ PHP_METHOD(wcx_task, __construct) {
 	RETURN_TRUE;
 }
 
+PHP_METHOD(wcx_task, interval) {
+	long t = 1.0;
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &t) == FAILURE) {
+		RETURN_FALSE;
+	}
+
+	if (t <= 0) {
+		RETURN_FALSE;
+	}
+
+	zend_update_property_long(wcx_task_class_entry, getThis(), ZEND_STRL(WCX_TASK_PROPERT_INTERVAL_NAME), t TSRMLS_CC);
+
+	RETURN_TRUE;
+}
+
 PHP_METHOD(wcx_task, process) {
 	zval *callback;
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &callback) == FAILURE) {
 		RETURN_FALSE;
 	}
 
-	zend_update_property(wcx_task_class_entry, getThis(), "process", sizeof("process") - 1, callback TSRMLS_CC);
+	zend_update_property(wcx_task_class_entry, getThis(), ZEND_STRL(WCX_TASK_PROPERT_PROCESS_NAME), callback TSRMLS_CC);
 
 	RETURN_TRUE;
 }
@@ -159,7 +174,7 @@ PHP_METHOD(wcx_task, run) {
 		RETURN_FALSE;
 	}
 
-	zval *closure = zend_read_property(wcx_task_class_entry, getThis(), "process", sizeof("process") - 1, 0 TSRMLS_CC);
+	zval *closure = zend_read_property(wcx_task_class_entry, getThis(), ZEND_STRL(WCX_TASK_PROPERT_PROCESS_NAME), 0 TSRMLS_CC);
 	if (!closure) {
 		php_error_docref(NULL TSRMLS_CC, E_ERROR, "please define your callback function");
 		RETURN_FALSE;
@@ -172,6 +187,8 @@ PHP_METHOD(wcx_task, run) {
 		RETURN_FALSE;
 	}
 	efree(func_name);
+
+	zval *interval = zend_read_property(wcx_task_class_entry, getThis(), ZEND_STRL(WCX_TASK_PROPERT_INTERVAL_NAME), 0 TSRMLS_CC);
 
 	struct sigaction act;
 	act.sa_handler = task_process_halt;
@@ -254,6 +271,7 @@ PHP_METHOD(wcx_task, run) {
 					task_list_node = tpr->task->head;
 					while (NULL != task_list_node) {
 						task_node_value = (wcx_task_message *)task_list_node->value;
+						WCX_TASK_DEBUG_LOG("check delete %s,%s\n", task_node_value->mtext, queue_message->mtext);
 						if (0 == strncmp(task_node_value->mtext + task_node_value->mtask_len, queue_message->mtext, queue_message->muuid_len)) {
 							WCX_TASK_DEBUG_LOG("process crontab to delete task=%s\n", queue_message->mtext);
 							listDelNode(tpr->task, task_list_node);
@@ -294,7 +312,7 @@ PHP_METHOD(wcx_task, run) {
 		WCX_TASK_DEBUG_LOG("task queue to unlock\n");
 		WCX_TASK_UNLOCK();
 		WCX_TASK_DEBUG_LOG("task queue to unlocked\n");
-		sleep(INI_INT("wcx.task_process_interval"));
+		sleep(Z_LVAL_P(interval));
 	}
 
 	efree(queue_message);
