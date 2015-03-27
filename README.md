@@ -40,14 +40,28 @@ bool   wcx_task_delete($task_uuid)
 bool   wcx_task_clear()
 ```
 
-###class
+###WcxTask
 ```
 $wcx_task_handle = new WcxTask();
+//v0.2.3
+//$wcx_task_handle->process(function($task_data){
+//v0.2.4
 $wcx_task_handle->process(function($task_uuid, $task_data){
     //task process
     //使用wcx_task_post可投递$task到任务队列中，系统每间隔wcx.task_process_interval秒扫描一次并检查队列中task的执行时间点($expect_task_process_timestamp,默认是立刻被执行)是否小于当前时间，小于则触发process，否则等待下一轮检测
 });
 $wcx_task_handle->run();
+```
+
+###WcxData
+```
+$data = array('name' => array('foo', 'bar'));
+$wcx_data_handle = new WcxData($data);
+print_r($wcx_data_handle->to_array());
+print_r($wcx_data_handle->get('name')->to_array());
+echo $wcx_data_handle->get('name')->get(0);
+var_dump($wcx_data_handle->get('none'));   //null
+var_dump($wcx_data_handle->get('none', [1,2,3])); //[1,2,3]
 ```
 
 更多疑问请+qq群 233415606 or [website http://xingqiba.sinaapp.com](http://xingqiba.sinaapp.com)
