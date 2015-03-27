@@ -312,7 +312,10 @@ PHP_METHOD(wcx_task, run) {
 		WCX_TASK_DEBUG_LOG("task queue to unlock\n");
 		WCX_TASK_UNLOCK();
 		WCX_TASK_DEBUG_LOG("task queue to unlocked\n");
-		sleep(Z_LVAL_P(interval));
+
+		if (result <= 0) {
+			sleep(Z_LVAL_P(interval));
+		}
 	}
 
 	efree(queue_message);
