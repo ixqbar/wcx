@@ -57,13 +57,15 @@ $wcx_task_handle->run();
 
 ###WcxData
 ```
+//@since v0.2.5
 $data = array('name' => array('foo', 'bar'));
 $wcx_data_handle = new WcxData($data);
 print_r($wcx_data_handle->to_array());
 print_r($wcx_data_handle->get('name')->to_array());
-var_dump($wcx_data_handle->get('name')->get(0));
-var_dump($wcx_data_handle->get('none'));   //null
-var_dump($wcx_data_handle->get('none', [1,2,3])); //[1,2,3]
+echo $wcx_data_handle->get('name')->get(0);
+var_dump($wcx_data_handle->get('none'));
+var_dump($wcx_data_handle->get('none', [1,2,3]));
+var_dump($wcx_data_handle->get('none', [1,2,3])->to_array());
 ```
 
 更多疑问请+qq群 233415606 or [website http://xingqiba.sinaapp.com](http://xingqiba.sinaapp.com)
