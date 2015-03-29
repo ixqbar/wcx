@@ -6,3 +6,4 @@ print_r($wcx_data_handle->get('name')->to_array());
 echo $wcx_data_handle->get('name')->get(0);
 var_dump($wcx_data_handle->get('none'));
 var_dump($wcx_data_handle->get('none', [1,2,3]));
+var_dump($wcx_data_handle->get('none', [1,2,3])->to_array());

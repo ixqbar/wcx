@@ -148,9 +148,14 @@ PHP_METHOD(wcx_data, get) {
 	}
 
 GET_RETURN: {
-	if (1 == num_args) {
+	if (1 == num_args || Z_TYPE_P(default_value) == IS_NULL) {
 		RETURN_NULL();
 	} else {
+		if (Z_TYPE_P(default_value) == IS_ARRAY
+				&& (ret = wcx_data_format(getThis(), &default_value TSRMLS_CC))) {
+			RETURN_ZVAL(ret, 1, 1);
+		}
+
 		RETURN_ZVAL(default_value, 1, 0);
 	}
 }
