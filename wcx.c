@@ -32,11 +32,14 @@
 
 #include "php_wcx.h"
 #include "wcx_task.h"
+#include "wcx_data.h"
 #include "aes.c"
 #include "zlib.c"
 
 /* True global resources - no need for thread safety here */
 static int le_wcx;
+
+ZEND_DECLARE_MODULE_GLOBALS(wcx);
 
 ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_encrypt, 0, 0, 2)
 	ZEND_ARG_INFO(0, encrypt_str)
@@ -112,11 +115,10 @@ ZEND_GET_MODULE(wcx)
 /* {{{ PHP_INI
  */
 PHP_INI_BEGIN()
-    PHP_INI_ENTRY("wcx.debug",     			   "0",              PHP_INI_SYSTEM, NULL)
-    PHP_INI_ENTRY("wcx.task_enabled",  	   	   "0", 			 PHP_INI_SYSTEM, NULL)
-    PHP_INI_ENTRY("wcx.task_queue_key",  	   "wcx_task_queue", PHP_INI_SYSTEM, NULL)
-    PHP_INI_ENTRY("wcx.task_data_key",         "wcx_task_data",  PHP_INI_SYSTEM, NULL)
-    PHP_INI_ENTRY("wcx.task_process_interval", "1", 			 PHP_INI_SYSTEM, NULL)
+    PHP_INI_ENTRY("wcx.debug",     	    "0",              PHP_INI_USER,   NULL)
+    PHP_INI_ENTRY("wcx.task_enabled",  	"0", 			  PHP_INI_USER,   NULL)
+    PHP_INI_ENTRY("wcx.task_queue_key", "wcx_task_queue", PHP_INI_SYSTEM, NULL)
+    PHP_INI_ENTRY("wcx.task_data_key",  "wcx_task_data",  PHP_INI_SYSTEM, NULL)
 PHP_INI_END()
 /* }}} */
 
@@ -141,6 +143,8 @@ PHP_MINIT_FUNCTION(wcx)
 	ZEND_INIT_MODULE_GLOBALS(wcx, php_wcx_init_globals, NULL);
 	//task
 	register_wcx_task_class(TSRMLS_C);
+	//data
+	register_wcx_data_class(TSRMLS_C);
 
 	return SUCCESS;
 }

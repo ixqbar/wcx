@@ -24,7 +24,7 @@
 extern zend_module_entry wcx_module_entry;
 #define phpext_wcx_ptr &wcx_module_entry
 
-#define PHP_WCX_VERSION "0.2.4"
+#define PHP_WCX_VERSION "0.2.5"
 
 #ifdef PHP_WIN32
 #	define PHP_WCX_API __declspec(dllexport)
@@ -61,7 +61,7 @@ ZEND_BEGIN_MODULE_GLOBALS(wcx)
 	void *wcx_task_ptr;
 ZEND_END_MODULE_GLOBALS(wcx)
 
-ZEND_DECLARE_MODULE_GLOBALS(wcx)
+ZEND_EXTERN_MODULE_GLOBALS(wcx)
 
 #ifdef ZTS
 #define WCX_G(v) TSRMG(wcx_globals_id, zend_wcx_globals *, v)

@@ -14,7 +14,8 @@
 #define WCX_TASK_MESSAGE_MAX_LEN       2048
 #define WCX_TASK_MESSAGE_OPT_IS_ADD    1
 #define WCX_TASK_MESSAGE_OPT_IS_DELETE 2
-
+#define WCX_TASK_PROPERT_PROCESS_NAME  "_process"
+#define WCX_TASK_PROPERT_INTERVAL_NAME "_interval"
 #define WCX_TASK_DEBUG_LOG(fmt, args...) if (1 == INI_INT("wcx.debug")) { php_printf(fmt, ##args); }
 #define WCX_TASK_PTR() (wcx_task_ptr *)WCX_G(wcx_task_ptr)
 #define WCX_TASK_LOCK() { \
@@ -78,6 +79,7 @@ wcx_task_ptr * wcx_task_init();
 void wcx_task_release(wcx_task_ptr *);
 
 PHP_METHOD(wcx_task, __construct);
+PHP_METHOD(wcx_task, interval);
 PHP_METHOD(wcx_task, process);
 PHP_METHOD(wcx_task, run);
 
