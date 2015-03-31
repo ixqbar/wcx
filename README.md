@@ -55,7 +55,35 @@ $wcx_task_handle->process(function($task_uuid, $task_data){
 $wcx_task_handle->run();
 ```
 
-###WcxData
+###WcxData(参照php-yaf中Yaf_Config_Abstract代码实现)
+
+```
+class WcxData implements Iterator, ArrayAccess, Countable {
+	protected array _config;
+	protected array _readonly;
+		
+	public __construct($data, $readonly=true);
+	public mixed get($name, $default_value);
+	public mixed __get($name);
+	public mixed __isset($name);
+	public mixed __set($name, $value);
+	public mixed set($name, $value);
+	public mixed count();
+	public mixed offsetGet($name);
+	public mixed offsetSet($name, $value);
+	public mixed offsetExists($name);
+	public mixed offsetUnset($name);
+	public void rewind();
+	public mixed key();
+	public mixed next();
+	public mixed current();
+	public boolean valid();
+	public array to_array();
+	public boolean readonly()
+}
+```
+
+example
 ```
 //@since v0.2.5
 $data = array('name' => array('foo', 'bar'));
