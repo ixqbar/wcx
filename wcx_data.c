@@ -21,11 +21,6 @@ extern PHPAPI zend_class_entry *spl_ce_Countable;
 ZEND_BEGIN_ARG_INFO_EX(wcx_data_void_arginfo, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(wcx_data_construct_arginfo, 0, 0, 1)
-	ZEND_ARG_INFO(0, config_file)
-	ZEND_ARG_INFO(0, section)
-ZEND_END_ARG_INFO()
-
 ZEND_BEGIN_ARG_INFO_EX(wcx_data_get_arginfo, 0, 0, 0)
 	ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()
@@ -86,15 +81,15 @@ zval * wcx_data_format(zval *instance, zval **ppzval TSRMLS_DC) {
  */
 PHP_METHOD(wcx_data, __construct) {
 	zval *values, *readonly = NULL;
+	int num_args = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &values, &readonly) == FAILURE) {
-		zval *prop;
-
-		MAKE_STD_ZVAL(prop);
-		array_init(prop);
-		zend_update_property(wcx_data_class_entry, getThis(), ZEND_STRL(WCX_DATA_PROPERT_NAME), prop TSRMLS_CC);
-		zval_ptr_dtor(&prop);
-		return;
+	if (0 == num_args) {
+		MAKE_STD_ZVAL(values);
+		array_init(values);
+	} else {
+		if (zend_parse_parameters(num_args TSRMLS_CC, "z|z", &values, &readonly) == FAILURE) {
+			return;
+		}
 	}
 
 	wcx_data_instance(getThis(), values, readonly TSRMLS_CC);
@@ -339,7 +334,7 @@ PHP_METHOD(wcx_data, __clone) {
 /** {{{ wcx_data_methods
 */
 zend_function_entry wcx_data_methods[] = {
-	PHP_ME(wcx_data, __construct, wcx_data_construct_arginfo, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
+	PHP_ME(wcx_data, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
 	PHP_ME(wcx_data, __destruct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DTOR)
 	PHP_ME(wcx_data, __isset, wcx_data_isset_arginfo, ZEND_ACC_PUBLIC)
 	PHP_ME(wcx_data, get, wcx_data_get_arginfo, ZEND_ACC_PUBLIC)
