@@ -1,4 +1,6 @@
 
+[more features](https://github.com/jonnywang/wcx/tree/dev)
+
 ##ini配置
 ```
 wcx.debug = 0                           是否打开调试，默认关闭
