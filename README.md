@@ -55,6 +55,11 @@ $wcx_task_handle->process(function($task_uuid, $task_data){
 $wcx_task_handle->run();
 ```
 
+###wcx_ini(参照php-yaf中Yaf_Config_Ini代码实现)
+```
+array wcx_ini(ini_file_path, section_name = '')
+```
+
 ###WcxData(参照php-yaf中Yaf_Config_Abstract代码实现)
 
 ```

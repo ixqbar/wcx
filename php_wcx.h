@@ -55,10 +55,14 @@ PHP_FUNCTION(wcx_task_info);
 PHP_FUNCTION(wcx_task_clear);
 PHP_FUNCTION(wcx_task_delete);
 PHP_FUNCTION(wcx_task_post);
+PHP_FUNCTION(wcx_ini);
 
 ZEND_BEGIN_MODULE_GLOBALS(wcx)
 	long wcx_task_running;
 	void *wcx_task_ptr;
+	zval *active_ini_file_section;
+	zval *ini_wanted_section;
+	uint parsing_flag;
 ZEND_END_MODULE_GLOBALS(wcx)
 
 ZEND_EXTERN_MODULE_GLOBALS(wcx)
