@@ -1,4 +1,6 @@
 
+[more features](https://github.com/jonnywang/wcx/tree/dev)
+
 ##ini配置
 ```
 wcx.debug = 0                           是否打开调试，默认关闭
@@ -53,6 +55,11 @@ $wcx_task_handle->process(function($task_uuid, $task_data){
     //使用wcx_task_post可投递$task到任务队列中，系统每间隔wcx.task_process_interval秒扫描一次并检查队列中task的执行时间点($expect_task_process_timestamp,默认是立刻被执行)是否小于当前时间，小于则触发process，否则等待下一轮检测
 });
 $wcx_task_handle->run();
+```
+
+###wcx_ini(参照php-yaf中Yaf_Config_Ini代码实现)
+```
+array wcx_ini(ini_file_path, section_name = '')
 ```
 
 ###WcxData(参照php-yaf中Yaf_Config_Abstract代码实现)

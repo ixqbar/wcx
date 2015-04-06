@@ -33,6 +33,7 @@
 #include "php_wcx.h"
 #include "wcx_task.h"
 #include "wcx_data.h"
+#include "wcx_ini.h"
 #include "aes.c"
 #include "zlib.c"
 
@@ -68,6 +69,11 @@ ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_task_post, 0, 0, 1)
     ZEND_ARG_INFO(0, task_post_arg)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_ini, 0, 0, 2)
+	ZEND_ARG_INFO(0, ini_file_path)
+	ZEND_ARG_INFO(0, setion)
+ZEND_END_ARG_INFO()
+
 /* {{{ wcx_functions[]
  *
  * Every user visible function must have an entry in wcx_functions[].
@@ -84,6 +90,7 @@ const zend_function_entry wcx_functions[] = {
     PHP_FE(wcx_task_clear,  NULL)
     PHP_FE(wcx_task_delete, arg_info_wcx_task_delete)
     PHP_FE(wcx_task_post,   arg_info_wcx_task_post)
+	PHP_FE(wcx_ini,         arg_info_wcx_ini)
 	PHP_FE_END	/* Must be the last line in wcx_functions[] */
 };
 /* }}} */
@@ -511,6 +518,90 @@ PHP_FUNCTION(wcx_bet) {
     }
 }
 
+PHP_FUNCTION(wcx_ini) {
+#if ((PHP_MAJOR_VERSION != 5) || (PHP_MINOR_VERSION <= 2))
+	php_error_docref(NULL TSRMLS_CC, E_WARNING, "PHP version too lower!");
+	RETURN_NULL();
+#endif
+
+	char *filename = NULL;
+	int filename_len = 0;
+	zval *section_name = NULL;
+	zval *configs = NULL;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p|z", &filename, &filename_len, &section_name) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (filename_len == 0) {
+		php_error_docref(NULL TSRMLS_CC, E_ERROR, "Filename cannot be empty!");
+		RETURN_NULL();
+	}
+
+	struct stat sb;
+	if (VCWD_STAT(filename, &sb)) {
+		php_error_docref(NULL TSRMLS_CC, E_ERROR, "Unable to find config file '%s'", filename);
+		RETURN_NULL();
+	}
+
+	if (!S_ISREG(sb.st_mode)) {
+		php_error_docref(NULL TSRMLS_CC, E_ERROR, "Argument is not a valid ini file '%s'", filename);
+		RETURN_NULL();
+	}
+
+	zend_file_handle fh = {0};
+	if ((fh.handle.fp = VCWD_FOPEN(filename, "r")) == NULL) {
+		php_error_docref(NULL TSRMLS_CC, E_ERROR, "Unable to read config file '%s'", filename);
+		RETURN_NULL();
+	}
+
+	MAKE_STD_ZVAL(configs);
+	ZVAL_NULL(configs);
+	array_init(configs);
+
+	fh.filename = filename;
+	fh.type = ZEND_HANDLE_FP;
+
+	WCX_G(active_ini_file_section) = NULL;
+	WCX_G(parsing_flag)            = WCX_CONFIG_INI_PARSING_START;
+
+	if (section_name && Z_STRLEN_P(section_name)) {
+		WCX_G(ini_wanted_section) = section_name;
+	} else {
+		WCX_G(ini_wanted_section) = NULL;
+	}
+
+	if (zend_parse_ini_file(&fh, 0, 0, (zend_ini_parser_cb_t)wcx_config_ini_parser_cb, configs TSRMLS_CC) == FAILURE
+			|| Z_TYPE_P(configs) != IS_ARRAY) {
+		zval_ptr_dtor(&configs);
+		php_error_docref(NULL TSRMLS_CC, E_ERROR, "Parsing ini file '%s' failed", filename);
+		RETURN_NULL();
+	}
+
+	if (section_name
+			&& Z_STRLEN_P(section_name)) {
+		zval **section;
+		if (zend_symtable_find(
+				Z_ARRVAL_P(configs),
+				Z_STRVAL_P(section_name),
+				Z_STRLEN_P(section_name) + 1,
+				(void **)&section) == FAILURE) {
+			zval_ptr_dtor(&configs);
+			php_error_docref(NULL TSRMLS_CC, E_ERROR, "There is no section '%s' in '%s'", Z_STRVAL_P(section_name), filename);
+			RETURN_NULL();
+		}
+
+		zval tmp;
+		INIT_PZVAL(&tmp);
+		array_init(&tmp);
+		zend_hash_copy(Z_ARRVAL(tmp), Z_ARRVAL_PP(section), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+		zval_dtor(configs);
+
+		*configs = tmp;
+	}
+
+	RETVAL_ZVAL(configs, 0, 1);
+}
 /*
  * Local variables:
  * tab-width: 4
