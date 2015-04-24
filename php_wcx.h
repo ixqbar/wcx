@@ -24,7 +24,7 @@
 extern zend_module_entry wcx_module_entry;
 #define phpext_wcx_ptr &wcx_module_entry
 
-#define PHP_WCX_VERSION "0.2.6"
+#define PHP_WCX_VERSION "0.2.7"
 
 #ifdef PHP_WIN32
 #	define PHP_WCX_API __declspec(dllexport)
@@ -56,6 +56,7 @@ PHP_FUNCTION(wcx_task_clear);
 PHP_FUNCTION(wcx_task_delete);
 PHP_FUNCTION(wcx_task_post);
 PHP_FUNCTION(wcx_ini);
+PHP_FUNCTION(wcx_str_rand);
 
 ZEND_BEGIN_MODULE_GLOBALS(wcx)
 	long wcx_task_running;
