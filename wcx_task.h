@@ -30,18 +30,6 @@
 		sem_post(&tpr->info->slock); \
 	} \
 }
-#define WCX_LOCK() { \
-	wcx_task_ptr *tpr = (wcx_task_ptr *)WCX_G(wcx_task_ptr);\
-	if (tpr) { \
-		sem_wait(&tpr->info->ulock); \
-	} \
-}
-#define WCX_UNLOCK() { \
-	wcx_task_ptr *tpr = (wcx_task_ptr *)WCX_G(wcx_task_ptr);\
-	if (tpr) { \
-		sem_post(&tpr->info->ulock); \
-	} \
-}
 
 typedef struct {
 	zend_object zo;
