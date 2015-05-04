@@ -103,6 +103,12 @@ var_dump($wcx_data_handle->get('none', [1,2,3]));
 var_dump($wcx_data_handle->get('none', [1,2,3])->to_array());
 ```
 
+###字符串随机
+```
+string wcx_str_rand(to_rand_len, not_rand_number = false)
+string wcx_str_rand(to_rand_len, to_rand_chars)
+```
+
 更多疑问请+qq群 233415606 or [website http://xingqiba.sinaapp.com](http://xingqiba.sinaapp.com)
 
 

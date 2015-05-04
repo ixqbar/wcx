@@ -74,6 +74,11 @@ ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_ini, 0, 0, 2)
 	ZEND_ARG_INFO(0, setion)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_str_rand, 0, 0, 2)
+	ZEND_ARG_INFO(0, len)
+	ZEND_ARG_INFO(0, option)
+ZEND_END_ARG_INFO()
+
 /* {{{ wcx_functions[]
  *
  * Every user visible function must have an entry in wcx_functions[].
@@ -91,6 +96,7 @@ const zend_function_entry wcx_functions[] = {
     PHP_FE(wcx_task_delete, arg_info_wcx_task_delete)
     PHP_FE(wcx_task_post,   arg_info_wcx_task_post)
 	PHP_FE(wcx_ini,         arg_info_wcx_ini)
+	PHP_FE(wcx_str_rand,    arg_info_wcx_str_rand)
 	PHP_FE_END	/* Must be the last line in wcx_functions[] */
 };
 /* }}} */
@@ -601,6 +607,48 @@ PHP_FUNCTION(wcx_ini) {
 	}
 
 	RETVAL_ZVAL(configs, 0, 1);
+}
+
+PHP_FUNCTION(wcx_str_rand) {
+	char *ini_rand_str = "abcdefghijklmnopqrstuvwxyz0123456789";
+	long str_len = 0;
+	char *result;
+	int i, j, init_str_len = strlen(ini_rand_str), num_args = ZEND_NUM_ARGS();
+	zval *option;
+
+	if (zend_parse_parameters(num_args TSRMLS_CC, "l|z", &str_len, &option) == FAILURE) {
+		RETURN_EMPTY_STRING();
+	}
+
+	if (str_len <= 0) {
+		RETURN_EMPTY_STRING();
+	}
+
+	if (num_args > 1) {
+		if (Z_TYPE_P(option) != IS_BOOL && Z_TYPE_P(option) != IS_STRING) {
+			RETURN_EMPTY_STRING();
+		}
+
+		if (Z_TYPE_P(option) == IS_STRING) {
+			if (Z_STRLEN_P(option) == 0) {
+				RETURN_EMPTY_STRING();
+			}
+			ini_rand_str = Z_STRVAL_P(option);
+			init_str_len = Z_STRLEN_P(option);
+		} else {
+			init_str_len = Z_LVAL_P(option) == 1 ? init_str_len - 10 : init_str_len;
+		}
+	}
+
+	result = emalloc(sizeof(char *) * (str_len + 1));
+	for (i = 0; i < str_len; i++) {
+		// ( rand() % (最大值-最小值+1) ) + 最小值
+		j = rand() % init_str_len;
+		result[i] = ini_rand_str[j];
+	}
+	result[str_len] = '\0';
+
+	RETURN_STRING(result, 0);
 }
 /*
  * Local variables:

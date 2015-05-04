@@ -422,11 +422,25 @@ PHP_FUNCTION(wcx_task_post) {
 }
 
 PHP_FUNCTION(wcx_lock) {
-	WCX_LOCK();
+	wcx_task_ptr *tpr = (wcx_task_ptr *)WCX_G(wcx_task_ptr);
+	if (tpr) {
+		if (0 == sem_trywait(&tpr->info->ulock)) {
+			RETURN_TRUE;
+		}
+	}
+
+	RETURN_FALSE;
 }
 
 PHP_FUNCTION(wcx_unlock) {
-	WCX_UNLOCK();
+	wcx_task_ptr *tpr = (wcx_task_ptr *)WCX_G(wcx_task_ptr);
+	if (tpr) {
+		if (0 == sem_post(&tpr->info->ulock)) {
+			RETURN_TRUE;
+		}
+	}
+
+	RETURN_FALSE;
 }
 
 PHP_FUNCTION(wcx_task_info) {
