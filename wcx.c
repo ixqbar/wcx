@@ -79,6 +79,12 @@ ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_str_rand, 0, 0, 2)
 	ZEND_ARG_INFO(0, option)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_array_remove, 0, 0, 3)
+	ZEND_ARG_INFO(0, arr)
+	ZEND_ARG_INFO(0, val)
+	ZEND_ARG_INFO(0, num)
+ZEND_END_ARG_INFO()
+
 /* {{{ wcx_functions[]
  *
  * Every user visible function must have an entry in wcx_functions[].
@@ -97,6 +103,7 @@ const zend_function_entry wcx_functions[] = {
     PHP_FE(wcx_task_post,   arg_info_wcx_task_post)
 	PHP_FE(wcx_ini,         arg_info_wcx_ini)
 	PHP_FE(wcx_str_rand,    arg_info_wcx_str_rand)
+	PHP_FE(wcx_array_remove,arg_info_wcx_array_remove)
 	PHP_FE_END	/* Must be the last line in wcx_functions[] */
 };
 /* }}} */
@@ -649,6 +656,90 @@ PHP_FUNCTION(wcx_str_rand) {
 	result[str_len] = '\0';
 
 	RETURN_STRING(result, 0);
+}
+
+PHP_FUNCTION(wcx_array_remove) {
+	zval *to_remove_arr, *to_remove_val, *tmp;
+	long to_remove_num = -1;
+	int key_type, to_removed_num = 0, to_remove_arr_len;
+	char *string_key = NULL;
+	uint string_key_len;
+	ulong num_key;
+	HashPosition pos;
+	zval **entry;
+	int found_val;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|l", &to_remove_arr, &to_remove_val, &to_remove_num) == FAILURE
+			|| Z_TYPE_P(to_remove_arr) != IS_ARRAY
+			|| (Z_TYPE_P(to_remove_val) != IS_STRING
+					&& Z_TYPE_P(to_remove_val) != IS_LONG
+					&& Z_TYPE_P(to_remove_val) != IS_DOUBLE
+					&& Z_TYPE_P(to_remove_val) != IS_BOOL)) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "First argument must be array and Second argument must be number or string");
+		RETURN_LONG(0);
+	}
+
+	to_remove_arr_len = zend_hash_num_elements(Z_ARRVAL_P(to_remove_arr));
+	if (0 == to_remove_arr_len) {
+		RETURN_LONG(0);
+	}
+
+	if (to_remove_num <= 0
+			|| to_remove_num > to_remove_arr_len) {
+		to_remove_num = to_remove_arr_len;
+	}
+
+	array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_P(to_remove_arr)));
+	zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_P(to_remove_arr), (copy_ctor_func_t) zval_add_ref, (void *)&tmp, sizeof(zval*));
+
+	zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(to_remove_arr), &pos);
+	while (to_remove_num != to_removed_num
+		&& (key_type = zend_hash_get_current_key_ex(Z_ARRVAL_P(to_remove_arr), &string_key, &string_key_len, &num_key, 0, &pos)) != HASH_KEY_NON_EXISTENT
+		&& zend_hash_get_current_data_ex(Z_ARRVAL_P(to_remove_arr), (void**)&entry, &pos) == SUCCESS) {
+		if (Z_TYPE_PP(entry) == Z_TYPE_P(to_remove_val)) {
+			found_val = 0;
+			switch (Z_TYPE_PP(entry)) {
+				case IS_STRING:
+					if (0 == strncmp(Z_STRVAL_PP(entry), Z_STRVAL_P(to_remove_val), Z_STRLEN_PP(entry))) {
+						found_val = 1;
+					}
+					break;
+				case IS_LONG:
+					if (Z_LVAL_PP(entry) == Z_LVAL_P(to_remove_val)) {
+						found_val = 1;
+					}
+					break;
+				case IS_DOUBLE:
+					if (Z_DVAL_PP(entry) == Z_DVAL_P(to_remove_val)) {
+						found_val = 1;
+					}
+					break;
+				case IS_BOOL:
+					if (Z_LVAL_PP(entry) == Z_LVAL_P(to_remove_val)) {
+						found_val = 1;
+					}
+					break;
+				default:
+					break;
+			}
+
+			if (found_val) {
+				zend_hash_del_key_or_index(Z_ARRVAL_P(return_value), string_key, string_key_len, num_key, (string_key) ? HASH_DEL_KEY : HASH_DEL_INDEX);
+				to_removed_num++;
+			}
+		}
+		zend_hash_move_forward_ex(Z_ARRVAL_P(to_remove_arr), &pos);
+	}
+
+	zend_hash_internal_pointer_reset(Z_ARRVAL_P(to_remove_arr));
+	if (to_removed_num) {
+		zval_dtor(to_remove_arr);
+		array_init_size(to_remove_arr, zend_hash_num_elements(Z_ARRVAL_P(return_value)));
+		zend_hash_copy(Z_ARRVAL_P(to_remove_arr), Z_ARRVAL_P(return_value), (copy_ctor_func_t) zval_add_ref, (void *)&tmp, sizeof(zval*));
+	}
+
+	zval_dtor(return_value);
+	RETURN_LONG(to_removed_num);
 }
 /*
  * Local variables:
