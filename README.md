@@ -13,31 +13,31 @@ wcx.task_process_interval = 1           task扫描间隔，单位秒  //@since v
 ##functions
 
 ###wcx_encrypt wcx_decrypt
-```
-string wcx_encrypt(to_encrypt_string, to_encrypt_key) //加密
-array wcx_decrypt(to_decrypt_string, to_encrtpt_key) //解密
+```php
+string wcx_encrypt($to_encrypt_string, $to_encrypt_key) //加密
+array wcx_decrypt($to_decrypt_string, $to_encrtpt_key) //解密
 ```
 * 内部实现为AES,php版本可参考example文件内代码
 
 ###wcx_array_rand
-```
-array wcx_array_rand(to_rand_array,num)  //数组随机(同时返回被随机到的key,value)
+```php
+array wcx_array_rand($to_rand_array,$num)  //数组随机(同时返回被随机到的key,value)
 ```
 
 ###wcx_bet
-```
-bool wcx_bet(rate_num)
+```php
+bool wcx_bet($rate_num)
 ```
 
 ###wcx_lock wcx_unlock
-```
+```php
 bool wcx_lock()
 bool wcx_unlock()
 ```
 * 依赖wcx.task_enabled＝1
 
 ###wcx_task_info wcx_task_post wcx_task_delete wcx_task_clear
-```
+```php
 array  wcx_task_info()
 string wcx_task_post($task, $expect_task_process_timestamp = 0, $task_uuid = '')
 bool   wcx_task_delete($task_uuid)
@@ -46,7 +46,7 @@ bool   wcx_task_clear()
 * 依赖wcx.task_enabled＝1
 
 ###WcxTask
-```
+```php
 $wcx_task_handle = new WcxTask();
 $wcx_task_handle->interval = 3;
 $wcx_task_handle->process(function($task_uuid, $task_data){
@@ -58,14 +58,13 @@ $wcx_task_handle->run();
 ```
 
 ###wcx_ini
-```
-array wcx_ini(ini_file_path, section_name = '')
+```php
+array wcx_ini($ini_file_path, $section_name = '')
 ```
 * 参照php-yaf中Yaf_Config_Ini代码实现
 
 ###WcxData
-
-```
+```php
 class WcxData implements Iterator, ArrayAccess, Countable {
 	protected array _config;
 	protected array _readonly;
@@ -93,7 +92,7 @@ class WcxData implements Iterator, ArrayAccess, Countable {
 * 参照php-yaf中Yaf_Config_Abstract代码实现, get增加默认参数
 
 ###WcxData
-```
+```php
 $data = array('name' => array('foo', 'bar'));
 $wcx_data_handle = new WcxData($data);
 print_r($wcx_data_handle->to_array());
@@ -105,10 +104,16 @@ var_dump($wcx_data_handle->get('none', [1,2,3])->to_array());
 ```
 
 ###wcx_str_rand
+```php
+string wcx_str_rand($to_rand_len, $not_rand_number = false)
+string wcx_str_rand($to_rand_len, $to_rand_chars)
 ```
-string wcx_str_rand(to_rand_len, not_rand_number = false)
-string wcx_str_rand(to_rand_len, to_rand_chars)
+
+###wcx_array_remove
+```php
+int wcx_array_remove(&$to_remove_arr, $to_remove_arr_element[, $to_remove_arr_element_num])
 ```
+* 删除时分区数组元素类型
 
 更多疑问请+qq群 233415606 or [website http://xingqiba.sinaapp.com](http://xingqiba.sinaapp.com)
 
