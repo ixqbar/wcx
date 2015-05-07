@@ -1,6 +1,16 @@
 <?php
 
-$t = ["345", "34", 34, "a", [1,2,3]];
+$t = ["345", "34", 34, [1, 3, 2, "3"]];
 var_dump($t);
-var_dump(wcx_array_remove($t, 34));
 
+echo "to remove number 34" . PHP_EOL;
+var_dump(wcx_array_remove($t, 34, true));
+var_dump($t);
+
+echo "to remove all 34" . PHP_EOL;
+var_dump(wcx_array_remove($t, 34));
+var_dump($t);
+
+echo "to remove child string 3" . PHP_EOL;
+var_dump(wcx_array_remove($t[3], "3", true));
+var_dump($t);
