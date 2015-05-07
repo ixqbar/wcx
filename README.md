@@ -111,9 +111,11 @@ string wcx_str_rand($to_rand_len, $to_rand_chars)
 
 ###wcx_array_remove
 ```php
-int wcx_array_remove(&$to_remove_arr, $to_remove_arr_element[, $to_remove_arr_element_num])
+int wcx_array_remove(&$to_remove_arr, $to_remove_arr_element[, $to_remove_arr_element_num|$to_remove_arr_element_by_strict_compare])
 ```
-* 删除时分区数组元素类型
+* wcx_array_remove($t, 3) 不区分类型删除所有3
+* wcx_array_remove($t, 3, 1) 不区分类型删除3，删除总量为1
+* wcx_array_remove($t, 3, true) 区分类型删除所有3
 
 更多疑问请+qq群 233415606 or [website http://xingqiba.sinaapp.com](http://xingqiba.sinaapp.com)
 
