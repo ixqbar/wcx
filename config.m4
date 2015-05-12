@@ -59,5 +59,10 @@ if test "$PHP_WCX" != "no"; then
   dnl
   dnl PHP_SUBST(WCX_SHARED_LIBADD)
 
-  PHP_NEW_EXTENSION(wcx,wcx_list.c wcx_task.c wcx_data.c wcx_ini.c wcx.c,$ext_shared)
+  PHP_NEW_EXTENSION(wcx, wcx_common.c \
+                         wcx_list.c \
+                         wcx_task.c \
+                         wcx_data.c \ 
+                         wcx_ini.c \ 
+                         wcx.c,$ext_shared)
 fi

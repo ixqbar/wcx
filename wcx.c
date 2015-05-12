@@ -31,6 +31,7 @@
 #include "ext/standard/crc32.h"
 
 #include "php_wcx.h"
+#include "wcx_common.h"
 #include "wcx_task.h"
 #include "wcx_data.h"
 #include "wcx_ini.h"
@@ -85,6 +86,13 @@ ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_array_remove, 0, 0, 3)
 	ZEND_ARG_INFO(0, num)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arg_info_wcx_geo_distance, 0, 0, 4)
+	ZEND_ARG_INFO(0, lat1d)
+	ZEND_ARG_INFO(0, lon1d)
+	ZEND_ARG_INFO(0, lat2d)
+	ZEND_ARG_INFO(0, lon2d)
+ZEND_END_ARG_INFO()
+
 /* {{{ wcx_functions[]
  *
  * Every user visible function must have an entry in wcx_functions[].
@@ -104,6 +112,7 @@ const zend_function_entry wcx_functions[] = {
 	PHP_FE(wcx_ini,         arg_info_wcx_ini)
 	PHP_FE(wcx_str_rand,    arg_info_wcx_str_rand)
 	PHP_FE(wcx_array_remove,arg_info_wcx_array_remove)
+	PHP_FE(wcx_geo_distance,arg_info_wcx_geo_distance)
 	PHP_FE_END	/* Must be the last line in wcx_functions[] */
 };
 /* }}} */
@@ -710,6 +719,15 @@ PHP_FUNCTION(wcx_array_remove) {
 	zval_ptr_dtor(&to_remove_copy);
 
 	RETURN_LONG(to_removed_num);
+}
+
+PHP_FUNCTION(wcx_geo_distance) {
+	double latitude1, longitude1, latitude2, longitude2;
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "dddd", &latitude1, &longitude1, &latitude2, &longitude2) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	RETVAL_DOUBLE(geoDistance(latitude1, longitude1, latitude2, longitude2));
 }
 /*
  * Local variables:

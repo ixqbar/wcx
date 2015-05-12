@@ -58,6 +58,7 @@ PHP_FUNCTION(wcx_task_post);
 PHP_FUNCTION(wcx_ini);
 PHP_FUNCTION(wcx_str_rand);
 PHP_FUNCTION(wcx_array_remove);
+PHP_FUNCTION(wcx_geo_distance);
 
 ZEND_BEGIN_MODULE_GLOBALS(wcx)
 	long wcx_task_running;
