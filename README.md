@@ -117,6 +117,11 @@ int wcx_array_remove(&$to_remove_arr, $to_remove_arr_element[, $to_remove_arr_el
 * wcx_array_remove($t, 3, 1) 不区分类型删除3，删除总量为1
 * wcx_array_remove($t, 3, true) 区分类型删除所有3
 
+###wcx_geo_distance
+```php
+wcx_geo_distance($lat1d, $lon1d, $lat2d, $lon2d)
+```
+
 更多疑问请+qq群 233415606 or [website http://xingqiba.sinaapp.com](http://xingqiba.sinaapp.com)
 
 
