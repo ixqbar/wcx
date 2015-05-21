@@ -53,7 +53,7 @@ static inline void wcx_deep_copy_section(zval *dst, zval *src TSRMLS_DC) {
 				}
 				zend_hash_index_update(Z_ARRVAL_P(dst), idx, (void *)&value, sizeof(zval *), NULL);
 				break;
-			case HASH_KEY_NON_EXISTANT:
+			case HASH_KEY_NON_EXISTENT:
 				break;
 		}
 	}
