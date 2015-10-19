@@ -428,7 +428,12 @@ PHP_FUNCTION(wcx_decrypt) {
 
 	origin_data -= origin_data_len;
 
-	if (crc != atoi(header_flags[3])) {
+	//fixed 32bit crc error
+	char crc_str[1 + strlen(header_flags[3])];
+	int crc_str_len = sprintf(crc_str, "%u", crc);
+	crc_str[crc_str_len] = '\0';
+
+	if (atoi(crc_str) != atoi(header_flags[3])) {
 		efree(origin_data);
 		return;
 	}
